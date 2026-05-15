@@ -1,0 +1,103 @@
+.transactions-panel .panel-title svg { color: #22c55e; }
+.txn-value { color: #22c55e !important; }
+
+.txn-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #1e293b;
+  border-bottom: 1px solid #1e293b;
+}
+
+.txn-item {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #1a2332;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.txn-item:hover { background: rgba(255,255,255,0.02); }
+
+.txn-color-bar {
+  width: 4px;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+
+.txn-body {
+  flex: 1;
+  min-width: 0;
+  padding: 0.75rem 0.75rem 0.75rem 0.6rem;
+}
+
+.txn-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.txn-type {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.txn-price {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #22c55e;
+}
+
+.txn-asset {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.txn-address {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 2px 0;
+}
+
+.txn-meta {
+  display: flex;
+  gap: 0.6rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 3px;
+  align-items: center;
+}
+
+.txn-cap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #4ade80;
+}
+
+.txn-parties {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.party-label {
+  color: #475569;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.party-name {
+  color: #94a3b8;
+}
+
+.party-sep {
+  color: #334155;
+}
