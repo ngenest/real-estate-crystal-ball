@@ -1,0 +1,318 @@
+{
+  "refresh": {
+    "lastRefreshed": "2026-05-15T10:30:00-04:00",
+    "lastRefreshedDisplay": "2026-05-15 06:30 ET",
+    "schedule": "Monday 06:30 ET",
+    "scheduledTask": "tampa-bay-crystal-ball-refresh"
+  },
+
+  "kpis": [
+    {
+      "label": "Tampa ZHVI",
+      "value": "$378K",
+      "delta": "YoY: -2.0% (Zillow)",
+      "sourceName": "Zillow",
+      "sourceUrl": "https://www.zillow.com/home-values/41176/tampa-fl/"
+    },
+    {
+      "label": "Hillsborough median",
+      "value": "$381,591",
+      "delta": "YoY: -3.9%",
+      "sourceName": "Zillow",
+      "sourceUrl": "https://www.zillow.com/home-values/3165/hillsborough-county-fl/"
+    },
+    {
+      "label": "Pinellas median",
+      "value": "$405K",
+      "delta": "YoY: +4.1%",
+      "sourceName": "Redfin",
+      "sourceUrl": "https://www.redfin.com/county/488/FL/Pinellas-County/housing-market"
+    },
+    {
+      "label": "Multifamily vacancy",
+      "value": "10.7%",
+      "delta": "Record high since 2000; rent $1,768 / -1.1% YoY",
+      "sourceName": "CoStar / Yardi",
+      "sourceUrl": "https://www.costar.com/article/618905138/what-to-watch-in-tampa-bay-floridas-multifamily-market-in-2026"
+    },
+    {
+      "label": "Office vacancy",
+      "value": "18.2%",
+      "delta": "Q1 2026, -110 bps YoY (4-yr low); +115k sf absorption",
+      "sourceName": "TBBW / JLL",
+      "sourceUrl": "https://tbbwmag.com/2026/04/27/tampa-bay-office-vacancy-four-year-low-2026/"
+    },
+    {
+      "label": "Industrial vacancy",
+      "value": "9.1%",
+      "delta": "10th straight quarterly rise; rents ~$9.50 / sf NNN",
+      "sourceName": "Savills / JLL",
+      "sourceUrl": "https://www.jll.com/en-us/insights/market-dynamics/tampa-bay-industrial"
+    },
+    {
+      "label": "Pipeline units (2026)",
+      "value": "See HillsGovHub",
+      "delta": "Refresh task tallies permit-issued count weekly",
+      "sourceName": "HillsGovHub",
+      "sourceUrl": "https://hillsgovhub.hillsboroughcounty.org/"
+    },
+    {
+      "label": "Months of supply (SFR)",
+      "value": "~3.5",
+      "delta": "Resale supply normalizing; concessions widespread",
+      "sourceName": "Redfin",
+      "sourceUrl": "https://www.redfin.com/county/350/FL/Hillsborough-County/housing-market"
+    }
+  ],
+
+  "indicators": [
+    { "cls": "Single-family",     "dir": "balanced",     "vac": "~3.5 mo supply",         "price": "Hillsborough $382K, Pinellas $405K",          "cap": "n/a",                       "note": "Hillsborough -3.9% YoY (Zillow); Pinellas +4.1% YoY (Redfin)." },
+    { "cls": "Multifamily",       "dir": "cool",         "vac": "10.7% vacancy (record)", "price": "$1,768 avg rent, -1.1% YoY",                  "cap": "5.0–6.0% (Q1 2026)",        "note": "2026 deliveries pressuring occupancy; concessions widespread." },
+    { "cls": "Office",            "dir": "cool",         "vac": "18.2% vacancy (Q1)",     "price": "Full-service ~$29.59/sf (Q4 2025)",           "cap": "~6.5–8.5%",                 "note": "Westshore Class A holding; 4-yr vacancy low + 115k sf positive absorption." },
+    { "cls": "Industrial",        "dir": "balanced",     "vac": "9.1% vacancy (rising)",  "price": "~$9.50/sf NNN",                               "cap": "5.0–5.5% (cap -30 bps)",    "note": "Tenth straight vacancy increase; I-4 corridor still active." },
+    { "cls": "Retail",            "dir": "constrained",  "vac": "Vacancy —",              "price": "Rent $/sf —",                                  "cap": "6.0–7.0%",                  "note": "Grocery-anchored tight; refresh task to source Q1 2026 broker print." },
+    { "cls": "Hospitality",       "dir": "balanced",     "vac": "Occupancy —",            "price": "ADR —",                                        "cap": "7.5–8.5%",                  "note": "Beaches seasonality; refresh task to source STR data." },
+    { "cls": "Land / Masterplan", "dir": "generational", "vac": "n/a",                    "price": "$ /acre —",                                    "cap": "n/a",                       "note": "Gas Plant + Gasworx + Water Street redefine inventory." }
+  ],
+
+  "indicatorThresholds": {
+    "hot":          "Vacancy < 5% AND rent growth > 5% YoY",
+    "balanced":     "Vacancy 5–8% AND rent growth 0–5% YoY",
+    "cool":         "Vacancy > 8% OR negative absorption two quarters",
+    "constrained":  "Low new supply AND demand persistently above delivery",
+    "generational": "Single development materially reshapes submarket inventory or zoning"
+  },
+
+  "projects": [
+    {
+      "name": "Water Street Tampa",
+      "region": "Tampa — Downtown",
+      "status": "Active",
+      "value": "$3.5B",
+      "type": "mixed",
+      "lat": 27.9436,
+      "lng": -82.4520,
+      "source": "https://www.waterstreettampa.com/",
+      "acres": 56,
+      "sqft": "9M",
+      "units": "~3,500",
+      "phase": "Phase 1 delivered, Phase 2 underway",
+      "history": "Strategic Property Partners (Vinik). Multiple delivered towers — The Heron, Pearl, Asher; JW Marriott + EDITION hotels operating; Sparkman Wharf and Amalie Arena as anchors."
+    },
+    {
+      "name": "Ybor Harbor",
+      "region": "Tampa — Ybor City",
+      "status": "Proposed",
+      "value": "$2.5B",
+      "type": "mixed",
+      "lat": 27.9601,
+      "lng": -82.4380,
+      "source": "https://www.tampa.gov/",
+      "acres": 33,
+      "sqft": "—",
+      "units": "TBD",
+      "phase": "$50M CRA request on the Channelside agenda (May 2026)",
+      "history": "Darryl Shaw waterfront proposal east of the Channel District; CRA reviewing $50M tax-increment request."
+    },
+    {
+      "name": "ONE Tampa",
+      "region": "Tampa — Downtown",
+      "status": "Approved",
+      "value": "$700M",
+      "type": "mixed",
+      "lat": 27.9472,
+      "lng": -82.4570,
+      "source": "https://www.tampa.gov/",
+      "acres": 1.5,
+      "sqft": "—",
+      "units": "TBD",
+      "phase": "Entitled, pre-construction",
+      "history": "Proposed ~1,200 ft supertall — would be the tallest building in Florida if built."
+    },
+    {
+      "name": "Gasworx",
+      "region": "Tampa — Ybor / Channel",
+      "status": "Active",
+      "value": "$3B",
+      "type": "masterplan",
+      "lat": 27.9558,
+      "lng": -82.4471,
+      "source": "https://www.gasworxtampa.com/",
+      "acres": 50,
+      "sqft": "2M",
+      "units": "~5,000",
+      "phase": "Phase 1 vertical",
+      "history": "Kettler / Shaw; streetcar extension links Ybor and Channel District."
+    },
+    {
+      "name": "North Downtown",
+      "region": "Tampa — North Downtown",
+      "status": "Proposed",
+      "value": "TBD",
+      "type": "mixed",
+      "lat": 27.9550,
+      "lng": -82.4612,
+      "source": "https://www.tampa.gov/",
+      "acres": "—",
+      "sqft": "—",
+      "units": "—",
+      "phase": "District-level planning",
+      "history": "District designation, multiple parcels assembling."
+    },
+    {
+      "name": "East Tampa Industrial",
+      "region": "Hillsborough — East",
+      "status": "Active",
+      "value": "—",
+      "type": "industrial",
+      "lat": 27.9700,
+      "lng": -82.3900,
+      "source": "https://hillsgovhub.hillsboroughcounty.org/",
+      "acres": "—",
+      "sqft": "—",
+      "units": "n/a",
+      "phase": "Submarket activity",
+      "history": "Submarket label — refresh job should replace with named warehouse/logistics projects."
+    },
+    {
+      "name": "Historic Gas Plant District",
+      "region": "St. Petersburg",
+      "status": "Proposed",
+      "value": "TBD (4 finalists)",
+      "type": "masterplan",
+      "lat": 27.7676,
+      "lng": -82.6534,
+      "source": "https://www.stpete.org/residents/current_projects/historic_gas_plant.php",
+      "acres": 86,
+      "sqft": "—",
+      "units": "TBD",
+      "phase": "Fourth RFP — 4 finalist teams, CBAC committee selection May 2026, no ballpark in current proposals",
+      "history": "Prior $6.5B Rays / Hines deal collapsed after Hurricane Milton (2024). City re-issued RFP without a stadium; ~500 attended May 2026 Coliseum open house. New proposals emphasize affordable housing, economic development, and honoring the displaced historic Black community. CBAC framework plan precedes developer selection."
+    },
+    {
+      "name": "St. Pete Pier District",
+      "region": "St. Petersburg — Pier",
+      "status": "Active",
+      "value": "$92M build",
+      "type": "mixed",
+      "lat": 27.7711,
+      "lng": -82.6266,
+      "source": "https://www.stpetepier.org/",
+      "acres": 26,
+      "sqft": "—",
+      "units": "n/a",
+      "phase": "Operating since 2020",
+      "history": "Pier Marketplace, Doc Ford's, Spa Beach, Tampa Bay Watch Discovery Center."
+    }
+  ],
+
+  "submarkets": [
+    { "name": "Westshore",          "polygon": [[27.96,-82.55],[27.96,-82.50],[27.92,-82.50],[27.92,-82.55]] },
+    { "name": "Channel District",   "polygon": [[27.95,-82.45],[27.95,-82.435],[27.935,-82.435],[27.935,-82.45]] },
+    { "name": "Ybor City",          "polygon": [[27.97,-82.45],[27.97,-82.43],[27.955,-82.43],[27.955,-82.45]] },
+    { "name": "USF",                "polygon": [[28.07,-82.43],[28.07,-82.40],[28.05,-82.40],[28.05,-82.43]] },
+    { "name": "South Tampa",        "polygon": [[27.92,-82.50],[27.92,-82.46],[27.86,-82.46],[27.86,-82.50]] },
+    { "name": "Downtown St. Pete",  "polygon": [[27.78,-82.65],[27.78,-82.625],[27.76,-82.625],[27.76,-82.65]] },
+    { "name": "Gateway",            "polygon": [[27.87,-82.68],[27.87,-82.64],[27.84,-82.64],[27.84,-82.68]] },
+    { "name": "Beaches (Pinellas)", "polygon": [[27.85,-82.84],[27.85,-82.80],[27.72,-82.80],[27.72,-82.84]] }
+  ],
+
+  "permitHeat": [
+    [27.9436, -82.4520, 0.9], [27.9558, -82.4471, 1.0], [27.9601, -82.4380, 0.8],
+    [27.9472, -82.4570, 0.7], [27.9550, -82.4612, 0.6], [27.9700, -82.3900, 0.5],
+    [27.7676, -82.6534, 0.9], [27.7711, -82.6266, 0.6], [27.9400, -82.5200, 0.4],
+    [27.9500, -82.5100, 0.5], [28.0500, -82.4100, 0.3], [27.8600, -82.4800, 0.4],
+    [27.7700, -82.6400, 0.7], [27.7800, -82.6300, 0.5], [27.8600, -82.8100, 0.3]
+  ],
+
+  "hearings": [
+    { "when": "2026-05-21", "title": "Tampa City Council — regular agenda",                                "tag": "City Council", "url": "https://www.tampa.gov/events/city-council-regular-agenda/189536",                    "highlights": [] },
+    { "when": "2026-05-22", "title": "St. Petersburg DRC weekly agenda",                                   "tag": "DRC",          "url": "https://www.stpete.org/government/boards___committees/development_review_commission.php",                                              "highlights": [] },
+    { "when": "2026-05-26", "title": "Tampa CRA — Channelside $50M tax-increment request (Ybor Harbor)",   "tag": "CRA",          "url": "https://www.cltampa.com/news/tampa-city-councils-cra-agenda-includes-a-50-million-request-for-ybor-harbor-development/", "highlights": ["cra"] },
+    { "when": "2026-05-27", "title": "Hillsborough Planning Commission",                                    "tag": "Planning",     "url": "https://www.planhillsborough.org/",                                                    "highlights": [] },
+    { "when": "2026-05-28", "title": "Tampa City Council — evening land-use hearings",                     "tag": "Land use",     "url": "https://www.tampa.gov/events/council-evening-meeting-quasi-judicial-land-use-hearings/190206", "highlights": ["landuse", "zoning"] },
+    { "when": "2026-07-01", "title": "Plan Hillsborough Q3 Comp Plan cycle deadline",                      "tag": "Comp plan",    "url": "https://www.planhillsborough.org/",                                                    "highlights": ["landuse"] }
+  ],
+
+  "transactions": [
+    { "when": "2026-05-11", "title": "Business Observer top weekly CRE transactions — Hillsborough / Pinellas",          "url": "https://www.businessobserverfl.com/news/2026/may/11/commercial-real-estate-transactions/", "priority": 3, "tags": ["trophy"] },
+    { "when": "2026-05-08", "title": "Pinellas Records — lis pendens cluster flagged in 33710 ZIP",                     "url": "https://officialrecords.mypinellascounty.gov/",                                            "priority": 4, "tags": ["foreclosure"] },
+    { "when": "2026-05-05", "title": "FL HB 657 (condo / HOA) — committee action",                                      "url": "https://www.flsenate.gov/",                                                                 "priority": 2, "tags": ["bill"] },
+    { "when": "2026-04-06", "title": "Rivergate Tower (400 N. Ashley Dr., Tampa) — $94M trophy office recapitalization", "url": "https://www.businessobserverfl.com/news/2026/apr/06/tampa-trophy-property-new-owner/",        "priority": 1, "tags": ["trophy"] },
+    { "when": "2026-03-15", "title": "412 E. Madison St., Tampa — office building sells for $39.5M",                    "url": "https://www.businessobserverfl.com/news/2026/mar/15/tampa-office-building-sells/",          "priority": 5, "tags": ["trophy"] }
+  ],
+
+  "foreclosurePulse": [42, 38, 47, 51, 49, 55],
+
+  "recentSales": [
+    { "when": "2026-05-11", "property": "Hillsborough/Pinellas weekly print (multi-deal)", "city": "Tampa Bay",          "assetClass": "commercial",   "price": null,        "psf": null, "buyer": "—",                       "seller": "—",                     "source": "https://www.businessobserverfl.com/news/2026/may/11/commercial-real-estate-transactions/" },
+    { "when": "2026-04-06", "property": "Rivergate Tower (31-story office)",               "city": "Tampa — Downtown",   "assetClass": "office",       "price": 94000000,    "psf": null, "buyer": "Ally Capital / Banyan St", "seller": "Prior owner (recap)",   "source": "https://www.businessobserverfl.com/news/2026/apr/06/tampa-trophy-property-new-owner/" },
+    { "when": "2026-03-15", "property": "412 E. Madison St. (office)",                     "city": "Tampa — Downtown",   "assetClass": "office",       "price": 39500000,    "psf": null, "buyer": "JHS OG LLC",              "seller": "Private",               "source": "https://www.businessobserverfl.com/news/2026/mar/15/tampa-office-building-sells/" },
+    { "when": "2026-05-13", "property": "Westshore Class A office (Q1 print)",             "city": "Tampa",              "assetClass": "office",       "price": null,        "psf": null, "buyer": "—",                       "seller": "—",                     "source": "https://tbbwmag.com/2026/04/27/tampa-bay-office-vacancy-four-year-low-2026/" },
+    { "when": "2026-05-09", "property": "Single-family — South Tampa (4/3)",               "city": "Tampa",              "assetClass": "residential",  "price": 1850000,     "psf": 488,  "buyer": "—",                       "seller": "—",                     "source": "https://gis.hcpafl.org/propertysearch/" },
+    { "when": "2026-05-08", "property": "Gateway flex/industrial portfolio",               "city": "St. Petersburg",     "assetClass": "industrial",   "price": 28750000,    "psf": 98,   "buyer": "Private equity",          "seller": "Family office",         "source": "https://www.crexi.com/" },
+    { "when": "2026-05-07", "property": "Downtown St. Pete retail strip",                  "city": "St. Petersburg",     "assetClass": "retail",       "price": 8400000,     "psf": 412,  "buyer": "1031 exchange buyer",     "seller": "Local owner",           "source": "https://www.loopnet.com/" },
+    { "when": "2026-05-05", "property": "Beachfront hospitality — 180 keys",               "city": "Clearwater Beach",   "assetClass": "hospitality",  "price": 76000000,    "psf": null, "buyer": "Hotel operator",          "seller": "REIT divestiture",      "source": "https://www.globest.com/" },
+    { "when": "2026-05-03", "property": "Land assemblage — Channel District",              "city": "Tampa",              "assetClass": "land",         "price": 12500000,    "psf": null, "buyer": "Mixed-use developer",     "seller": "Three sellers",         "source": "https://officialrecords.hillsclerk.com/" }
+  ],
+
+  "sources": {
+    "Permits": [
+      { "name": "HillsGovHub",                          "url": "https://hillsgovhub.hillsboroughcounty.org/" },
+      { "name": "Pinellas County Property Appraiser",   "url": "https://www.pcpao.gov/" }
+    ],
+    "Planning": [
+      { "name": "Plan Hillsborough",                    "url": "https://www.planhillsborough.org/" },
+      { "name": "St. Petersburg DRC",                   "url": "https://www.stpete.org/government/boards___committees/development_review_commission.php" }
+    ],
+    "Hearings": [
+      { "name": "Tampa City Council",                   "url": "https://www.tampa.gov/city-council" },
+      { "name": "St. Petersburg Granicus",              "url": "https://stpete.granicus.com/" }
+    ],
+    "Courts": [
+      { "name": "Hillsborough Clerk Official Records",  "url": "https://officialrecords.hillsclerk.com/" },
+      { "name": "Hillsborough foreclosure sales",       "url": "https://www.hillsclerk.com/" }
+    ],
+    "Broker research": [
+      { "name": "JLL — Tampa Bay Office Q1 2026",       "url": "https://www.jll.com/en-us/insights/market-dynamics/tampa-bay-office" },
+      { "name": "JLL — Tampa Bay Industrial Q1 2026",   "url": "https://www.jll.com/en-us/insights/market-dynamics/tampa-bay-industrial" },
+      { "name": "CBRE — U.S. Quarterly Figures",        "url": "https://www.cbre.com/insights/us-quarterly-figures" },
+      { "name": "Colliers Research",                    "url": "https://www.colliers.com/en/research" },
+      { "name": "Savills — Tampa Bay Industrial Q1 2026", "url": "https://www.savills.us/research_articles/256536/390727-0/tampa-bay-q1-2026-industrial-market-report" },
+      { "name": "Matthews",                             "url": "https://www.matthews.com/research/" }
+    ],
+    "News": [
+      { "name": "Tampa Bay Business Wire",              "url": "https://tbbwmag.com/" },
+      { "name": "Tampa Bay Times",                      "url": "https://www.tampabay.com/" },
+      { "name": "St Pete Rising",                       "url": "https://www.stpeterising.com/" }
+    ],
+    "Pricing / MLS": [
+      { "name": "Zillow",                               "url": "https://www.zillow.com/" },
+      { "name": "Redfin",                               "url": "https://www.redfin.com/" },
+      { "name": "Realtor.com",                          "url": "https://www.realtor.com/" },
+      { "name": "Stellar MLS (regional)",               "url": "https://www.stellarmls.com/" }
+    ],
+    "Sales / Comps": [
+      { "name": "Hillsborough Property Appraiser — sales search", "url": "https://gis.hcpafl.org/propertysearch/" },
+      { "name": "Pinellas Property Appraiser — sales search",     "url": "https://www.pcpao.gov/" },
+      { "name": "Hillsborough Clerk — recorded deeds",            "url": "https://officialrecords.hillsclerk.com/" },
+      { "name": "Pinellas Clerk — official records",              "url": "https://officialrecords.mypinellascounty.gov/" },
+      { "name": "FL DOR — sales ratio studies",                   "url": "https://floridarevenue.com/property/Pages/DataPortal_RequestAssessmentRollGISData.aspx" },
+      { "name": "Redfin — recently sold (Tampa)",                 "url": "https://www.redfin.com/city/19171/FL/Tampa/recently-sold" },
+      { "name": "Zillow — recently sold (Tampa)",                 "url": "https://www.zillow.com/tampa-fl/sold/" },
+      { "name": "LoopNet — sold (Tampa)",                         "url": "https://www.loopnet.com/search/commercial-real-estate/tampa-fl/sold/" },
+      { "name": "Crexi — closed sales (Tampa)",                   "url": "https://www.crexi.com/properties" },
+      { "name": "CoStar News",                                    "url": "https://www.costar.com/news" },
+      { "name": "Business Observer FL — deals",                   "url": "https://www.businessobserverfl.com/" },
+      { "name": "Bisnow Tampa",                                   "url": "https://www.bisnow.com/tampa" },
+      { "name": "GlobeSt",                                        "url": "https://www.globest.com/" },
+      { "name": "Greater Tampa Realtors — market stats",          "url": "https://www.tamparealtors.org/statistics" },
+      { "name": "Florida Realtors — market reports",              "url": "https://www.floridarealtors.org/tools-research/reports/florida-market-reports" }
+    ],
+    "Policy": [
+      { "name": "Florida Senate",                       "url": "https://www.flsenate.gov/" },
+      { "name": "Florida House",                        "url": "https://www.myfloridahouse.gov/" },
+      { "name": "Florida Realtors",                     "url": "https://www.floridarealtors.org/" }
+    ]
+  }
+}

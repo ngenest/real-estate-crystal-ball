@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tampa Bay Real Estate Crystal Ball</title>
+<meta name="description" content="Self-contained monitoring dashboard for Hillsborough (Tampa) and Pinellas (St. Petersburg) real estate.">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Tampa Bay Real Estate Crystal Ball</h1>
+    <p class="tag">Monitoring development across Hillsborough (Tampa) and Pinellas (St. Petersburg).</p>
+    <div class="meta">
+      <div>Last refresh: <strong id="refresh-date">—</strong></div>
+      <div>Next refresh: <strong id="refresh-schedule">—</strong> via <code id="refresh-task">—</code></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="main">
+  <div class="loading" id="loading">Loading dashboard data&hellip;</div>
+
+  <div id="content" hidden>
+    <section>
+      <h2>Market KPIs</h2>
+      <p class="sub">Headline indicators across the two-county metro. Each card cites its primary source.</p>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </section>
+
+    <section>
+      <h2>Project map</h2>
+      <p class="sub">Active, approved, and proposed projects across the two counties. Toggle status filters and layers; click a marker for details.</p>
+      <div id="map-wrap">
+        <div id="map"></div>
+        <div class="map-controls">
+          <h5>Filter by status</h5>
+          <label><input type="checkbox" data-status="Active" checked> Active</label>
+          <label><input type="checkbox" data-status="Approved" checked> Approved</label>
+          <label><input type="checkbox" data-status="Proposed" checked> Proposed</label>
+          <hr>
+          <h5>Layers</h5>
+          <label><input type="checkbox" id="layer-submarkets"> Submarket overlays</label>
+          <label><input type="checkbox" id="layer-heatmap"> Permit-density heatmap</label>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--cyan)"></span>Mixed-use</span>
+        <span><span class="dot" style="background:var(--green)"></span>Residential</span>
+        <span><span class="dot" style="background:var(--amber)"></span>Industrial</span>
+        <span><span class="dot" style="background:var(--purple)"></span>Master plan</span>
+        <span><span class="dot" style="background:var(--red)"></span>Office</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Projects to watch</h2>
+      <p class="sub">Anchor developments shaping the next cycle. Card values refreshed weekly.</p>
+      <div class="proj-grid" id="proj-grid"></div>
+    </section>
+
+    <section>
+      <h2>Indicators by asset class</h2>
+      <p class="sub">Direction pills:
+        <span class="pill pill-hot">hot</span>
+        <span class="pill pill-balanced">balanced</span>
+        <span class="pill pill-cool">cool</span>
+        <span class="pill pill-constrained">constrained</span>
+        <span class="pill pill-generational">generational</span>. Thresholds: <span id="threshold-summary"></span>
+      </p>
+      <table class="indicators">
+        <thead>
+          <tr><th>Asset class</th><th>Direction</th><th>Vacancy / Absorption</th><th>Pricing benchmark</th><th>Cap rate</th><th>Note</th></tr>
+        </thead>
+        <tbody id="indicators-body"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>What's moving this fortnight</h2>
+      <p class="sub">Hearings in the rolling 14-day window and the top-5 legal/transaction movers. Highlight tags flag zoning, CRA spend, and land-use amendments.</p>
+      <div class="two-col">
+        <div class="feed">
+          <h3>Public hearings &amp; policy <span class="count" id="hearings-count"></span></h3>
+          <ul id="hearings-list"></ul>
+        </div>
+        <div class="feed">
+          <h3>Top-5 transactions &amp; legal <span class="count">priority-ranked</span></h3>
+          <ul id="transactions-list"></ul>
+          <div class="chart-card">
+            <h3>Foreclosure pulse — weekly filings (Hillsborough)</h3>
+            <p class="chart-sub" id="foreclosure-chart-sub">Sparkline.</p>
+            <svg id="foreclosure-chart" viewBox="0 0 600 140" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Recent sales (rolling 30 days)</h2>
+      <p class="sub">Closed sale prints from public records and trade press. Drives the comp picture for underwriting.</p>
+      <table class="sales">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Property</th>
+            <th>Asset class</th>
+            <th class="num">Price</th>
+            <th class="num">$/sf</th>
+            <th>Buyer ← Seller</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="sales-body"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Source directory</h2>
+      <p class="sub">Authoritative public sources powering this dashboard. Refresh task verifies all links resolve.</p>
+      <div class="sources" id="sources-grid"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  Self-contained dashboard. Edits managed by the <code>tampa-bay-crystal-ball-refresh</code> scheduled task.
+  <br>Tracked under Jira project <a href="https://codeboxx.atlassian.net/jira/software/projects/RECB/boards/320">RECB</a>.
+</footer>
+
+<aside class="map-rail" id="map-rail" aria-hidden="true">
+  <button class="close" id="rail-close" aria-label="Close">&times;</button>
+  <div id="rail-content"></div>
+</aside>
+
+<script src="/app.js"></script>
+</body>
+</html>

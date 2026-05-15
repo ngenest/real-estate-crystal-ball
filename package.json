@@ -1,0 +1,21 @@
+{
+  "name": "tampa-bay-crystal-ball",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tampa Bay real-estate monitoring dashboard for Hillsborough and Pinellas counties (RECB epic).",
+  "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "build:static": "node scripts/build-static.mjs",
+    "validate:sources": "node scripts/validate-sources.mjs",
+    "validate:data": "node scripts/validate-data.mjs",
+    "refresh:check": "node scripts/refresh-check.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
