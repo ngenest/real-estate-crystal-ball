@@ -68,13 +68,9 @@ function parseRssFeed(xml, sourceName) {
 }
 
 function stripHtml(html) {
-  try {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || '';
-  } catch {
-    return html.replace(/<[^>]*>/g, '');
-  }
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return (tmp.textContent ?? tmp.innerText ?? '').trim();
 }
 
 function guessRegion(text) {
