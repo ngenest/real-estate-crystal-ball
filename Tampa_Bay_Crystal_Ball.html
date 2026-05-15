@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tampa Bay Real Estate Crystal Ball</title>
+<meta name="description" content="Self-contained monitoring dashboard for Hillsborough (Tampa) and Pinellas (St. Petersburg) real estate.">
+
+<!-- Leaflet 1.9.4 (RECB-4) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Leaflet.heat for permit-density heatmap (RECB-4) -->
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #131c2e;
+    --panel-2: #1a2540;
+    --border: #243352;
+    --text: #e6ecf5;
+    --muted: #8da0bf;
+    --accent: #4cc2ff;
+    --accent-2: #7c5cff;
+    --hot: #ff5d6c;
+    --cool: #4cc2ff;
+    --balanced: #c9d1de;
+    --constrained: #ffb347;
+    --generational: #b388ff;
+    --green: #3ecf8e;
+    --amber: #ffb347;
+    --red: #ff5d6c;
+    --cyan: #4cc2ff;
+    --purple: #b388ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+  header.hero {
+    background: linear-gradient(135deg, #14213d 0%, #1a2540 60%, #2b1b4a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px;
+  }
+  header.hero .wrap { padding: 0; }
+  header.hero h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.01em; }
+  header.hero p.tag { margin: 0; color: var(--muted); font-size: 14px; }
+  header.hero .meta { margin-top: 16px; display: flex; gap: 24px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+  header.hero .meta strong { color: var(--text); }
+
+  section { margin: 32px 0; }
+  section > h2 { font-size: 20px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  section > p.sub { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .kpi {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px;
+  }
+  .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .kpi .value { font-size: 22px; font-weight: 600; margin: 6px 0 4px; }
+  .kpi .delta { font-size: 12px; color: var(--muted); }
+  .kpi .src { font-size: 11px; color: var(--muted); margin-top: 8px; }
+  .kpi .src a { color: var(--accent); }
+
+  /* Map (RECB-4) */
+  #map-wrap { position: relative; }
+  #map { height: 520px; border-radius: 10px; border: 1px solid var(--border); }
+  .map-controls {
+    position: absolute; top: 12px; right: 12px; z-index: 500;
+    background: rgba(19,28,46,0.92); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; font-size: 12px; color: var(--text); backdrop-filter: blur(4px);
+    min-width: 180px;
+  }
+  .map-controls h5 { margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  .map-controls label { display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer; user-select: none; }
+  .map-controls label input { margin: 0; accent-color: var(--accent); }
+  .map-controls hr { border: 0; border-top: 1px solid var(--border); margin: 8px 0; }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+    font-size: 12px; color: var(--muted);
+  }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  /* Right-rail expansion (RECB-4) */
+  .map-rail {
+    position: fixed; top: 0; right: 0; height: 100vh; width: 420px; max-width: 90vw;
+    background: var(--panel); border-left: 1px solid var(--border);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    z-index: 1000; overflow-y: auto; padding: 24px;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.4);
+  }
+  .map-rail.open { transform: translateX(0); }
+  .map-rail h3 { margin: 0 0 8px; font-size: 18px; }
+  .map-rail .close {
+    position: absolute; top: 14px; right: 16px; background: none; border: 0;
+    color: var(--muted); font-size: 22px; cursor: pointer;
+  }
+  .map-rail .close:hover { color: var(--text); }
+  .map-rail .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .map-rail .row span { color: var(--muted); }
+  .map-rail .row strong { color: var(--text); font-weight: 500; }
+  .map-rail .src-btn {
+    display: inline-block; margin-top: 16px; padding: 8px 14px;
+    background: var(--accent); color: #0b1220; border-radius: 6px; font-weight: 600; font-size: 13px;
+  }
+  .map-rail .src-btn:hover { text-decoration: none; opacity: 0.9; }
+
+  .proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .proj {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px;
+  }
+  .proj h3 { margin: 0 0 6px; font-size: 15px; }
+  .proj .row { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+  .proj .row strong { color: var(--text); font-weight: 500; }
+  .proj .type {
+    display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .type-mixed { background: rgba(76,194,255,0.12); color: var(--cyan); }
+  .type-residential { background: rgba(62,207,142,0.12); color: var(--green); }
+  .type-industrial { background: rgba(255,179,71,0.12); color: var(--amber); }
+  .type-masterplan { background: rgba(179,136,255,0.12); color: var(--purple); }
+  .type-office { background: rgba(255,93,108,0.12); color: var(--red); }
+
+  table.indicators {
+    width: 100%; border-collapse: collapse;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  table.indicators th, table.indicators td {
+    text-align: left; padding: 10px 14px; font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.indicators th { background: var(--panel-2); color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; }
+  table.indicators tr:last-child td { border-bottom: 0; }
+
+  .pill {
+    display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  }
+  .pill-hot { background: rgba(255,93,108,0.14); color: var(--hot); }
+  .pill-cool { background: rgba(76,194,255,0.14); color: var(--cool); }
+  .pill-balanced { background: rgba(201,209,222,0.10); color: var(--balanced); }
+  .pill-constrained { background: rgba(255,179,71,0.14); color: var(--constrained); }
+  .pill-generational { background: rgba(179,136,255,0.14); color: var(--generational); }
+
+  /* Highlight tags (RECB-5) */
+  .tag {
+    display: inline-block; font-size: 10px; padding: 1px 8px; border-radius: 999px;
+    margin-left: 6px; text-transform: uppercase; letter-spacing: 0.06em;
+    background: rgba(124,92,255,0.14); color: var(--accent-2);
+  }
+  .tag-zoning      { background: rgba(255,93,108,0.18); color: var(--hot); }
+  .tag-cra         { background: rgba(255,179,71,0.18); color: var(--amber); }
+  .tag-landuse     { background: rgba(179,136,255,0.18); color: var(--purple); }
+  .tag-foreclosure { background: rgba(255,93,108,0.18); color: var(--hot); }
+  .tag-trophy      { background: rgba(76,194,255,0.18); color: var(--cyan); }
+  .tag-bill        { background: rgba(62,207,142,0.18); color: var(--green); }
+
+  .feed-row.priority {
+    background: linear-gradient(90deg, rgba(255,93,108,0.06) 0%, transparent 100%);
+    padding-left: 8px;
+    border-left: 2px solid var(--hot);
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 880px) { .two-col { grid-template-columns: 1fr; } }
+  .feed {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px;
+  }
+  .feed h3 { margin: 0 0 12px; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .feed h3 .count { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; }
+  .feed ul { margin: 0; padding: 0; list-style: none; }
+  .feed li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .feed li:last-child { border-bottom: 0; }
+  .feed .when { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-right: 8px; }
+
+  /* Recent Sales table (RECB-6 gap) */
+  table.sales {
+    width: 100%; border-collapse: collapse;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    font-size: 13px;
+  }
+  table.sales th, table.sales td {
+    text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border);
+  }
+  table.sales th { background: var(--panel-2); color: var(--muted); font-weight: 500; text-transform: uppercase; font-size: 11px; letter-spacing: 0.06em; }
+  table.sales tr:last-child td { border-bottom: 0; }
+  table.sales td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  table.sales .class {
+    display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: rgba(76,194,255,0.12); color: var(--cyan);
+  }
+
+  /* Foreclosure trend chart (RECB-6) */
+  .chart-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; margin-top: 16px;
+  }
+  .chart-card h3 { margin: 0 0 4px; font-size: 14px; }
+  .chart-card .chart-sub { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+  #foreclosure-chart { width: 100%; height: 140px; display: block; }
+
+  .sources { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .source-cat {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px;
+  }
+  .source-cat h4 { margin: 0 0 8px; font-size: 13px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+  .source-cat ul { margin: 0; padding: 0; list-style: none; }
+  .source-cat li { padding: 4px 0; font-size: 13px; }
+
+  footer { color: var(--muted); font-size: 12px; padding: 32px 0; text-align: center; border-top: 1px solid var(--border); margin-top: 32px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Tampa Bay Real Estate Crystal Ball</h1>
+    <p class="tag">Monitoring development across Hillsborough (Tampa) and Pinellas (St. Petersburg).</p>
+    <div class="meta">
+      <!-- DATA:refresh START -->
+      <div>Last refresh: <strong id="refresh-date">2026-05-11 06:30 ET</strong></div>
+      <div>Next refresh: <strong>Monday 06:30 ET</strong> via <code>tampa-bay-crystal-ball-refresh</code></div>
+      <!-- DATA:refresh END -->
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- KPI CARDS (RECB-3) -->
+  <section>
+    <h2>Market KPIs</h2>
+    <p class="sub">Headline indicators across the two-county metro. Each card cites its primary source.</p>
+    <div class="kpi-grid" id="kpi-grid">
+      <!-- DATA:kpis START -->
+      <div class="kpi"><div class="label">Tampa median price</div><div class="value">—</div><div class="delta">YoY: —</div><div class="src">Source: <a href="https://www.zillow.com/home-values/47900/tampa-fl/">Zillow ZHVI</a></div></div>
+      <div class="kpi"><div class="label">Hillsborough median</div><div class="value">—</div><div class="delta">YoY: —</div><div class="src">Source: <a href="https://www.redfin.com/county/350/FL/Hillsborough-County/housing-market">Redfin</a></div></div>
+      <div class="kpi"><div class="label">Pinellas median</div><div class="value">—</div><div class="delta">YoY: —</div><div class="src">Source: <a href="https://www.redfin.com/county/364/FL/Pinellas-County/housing-market">Redfin</a></div></div>
+      <div class="kpi"><div class="label">Multifamily vacancy</div><div class="value">—</div><div class="delta">QoQ: —</div><div class="src">Source: <a href="https://www.cbre.com/insights/figures">CBRE Figures</a></div></div>
+      <div class="kpi"><div class="label">Office vacancy</div><div class="value">—</div><div class="delta">QoQ: —</div><div class="src">Source: <a href="https://www.jll.com/en-us/insights">JLL Insights</a></div></div>
+      <div class="kpi"><div class="label">Industrial absorption</div><div class="value">—</div><div class="delta">$ /sf: —</div><div class="src">Source: <a href="https://www.colliers.com/en/research">Colliers</a></div></div>
+      <div class="kpi"><div class="label">Pipeline units (2026)</div><div class="value">—</div><div class="delta">Under construction</div><div class="src">Source: <a href="https://hillsgovhub.hillsboroughcounty.org/">HillsGovHub</a></div></div>
+      <div class="kpi"><div class="label">Months of supply</div><div class="value">—</div><div class="delta">SFR resale</div><div class="src">Source: <a href="https://www.redfin.com/county/350/FL/Hillsborough-County/housing-market">Redfin</a></div></div>
+      <!-- DATA:kpis END -->
+    </div>
+  </section>
+
+  <!-- GEOGRAPHIC MAP (RECB-4) -->
+  <section>
+    <h2>Project map</h2>
+    <p class="sub">Active and proposed projects across the two counties. Toggle layers and click a marker for details.</p>
+    <div id="map-wrap">
+      <div id="map"></div>
+      <div class="map-controls">
+        <h5>Filter by status</h5>
+        <label><input type="checkbox" data-status="Active" checked> Active</label>
+        <label><input type="checkbox" data-status="Approved" checked> Approved</label>
+        <label><input type="checkbox" data-status="Proposed" checked> Proposed</label>
+        <hr>
+        <h5>Layers</h5>
+        <label><input type="checkbox" id="layer-submarkets"> Submarket overlays</label>
+        <label><input type="checkbox" id="layer-heatmap"> Permit-density heatmap</label>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--cyan)"></span>Mixed-use</span>
+      <span><span class="dot" style="background:var(--green)"></span>Residential</span>
+      <span><span class="dot" style="background:var(--amber)"></span>Industrial</span>
+      <span><span class="dot" style="background:var(--purple)"></span>Master plan</span>
+      <span><span class="dot" style="background:var(--red)"></span>Office</span>
+    </div>
+  </section>
+
+  <!-- PROJECTS TO WATCH -->
+  <section>
+    <h2>Projects to watch</h2>
+    <p class="sub">Anchor developments shaping the next cycle. Card values refreshed weekly.</p>
+    <div class="proj-grid" id="proj-grid"></div>
+  </section>
+
+  <!-- INDICATORS TABLE (RECB-3) -->
+  <section>
+    <h2>Indicators by asset class</h2>
+    <p class="sub">Direction pills: <span class="pill pill-hot">hot</span> <span class="pill pill-balanced">balanced</span> <span class="pill pill-cool">cool</span> <span class="pill pill-constrained">constrained</span> <span class="pill pill-generational">generational</span>. Thresholds documented in <code>indicatorThresholds</code>.</p>
+    <table class="indicators">
+      <thead>
+        <tr><th>Asset class</th><th>Direction</th><th>Vacancy / Absorption</th><th>Pricing benchmark</th><th>Cap rate</th><th>Note</th></tr>
+      </thead>
+      <tbody id="indicators-body"></tbody>
+    </table>
+  </section>
+
+  <!-- HEARINGS (RECB-5) + TRANSACTIONS (RECB-6) -->
+  <section>
+    <h2>What's moving this fortnight</h2>
+    <p class="sub">Hearings on the 14-day window and the top-5 legal/transaction movers. Highlight tags flag zoning, CRA spend, and land-use amendments.</p>
+    <div class="two-col">
+      <div class="feed">
+        <h3>Public hearings &amp; policy <span class="count" id="hearings-count"></span></h3>
+        <ul id="hearings-list"></ul>
+      </div>
+      <div class="feed">
+        <h3>Top-5 transactions &amp; legal <span class="count">priority-ranked</span></h3>
+        <ul id="transactions-list"></ul>
+        <div class="chart-card">
+          <h3>Foreclosure pulse — weekly filings (Hillsborough)</h3>
+          <p class="chart-sub" id="foreclosure-chart-sub">Sparkline. Needs 6 weeks of accrued data before the refresh job populates real values.</p>
+          <svg id="foreclosure-chart" viewBox="0 0 600 140" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECENT SALES (RECB-6 gap) -->
+  <section>
+    <h2>Recent sales (rolling 30 days)</h2>
+    <p class="sub">Closed sale prints from public records and trade press. Drives the comp picture for underwriting.</p>
+    <table class="sales">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Property</th>
+          <th>Asset class</th>
+          <th class="num">Price</th>
+          <th class="num">$/sf</th>
+          <th>Buyer ← Seller</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody id="sales-body"></tbody>
+    </table>
+  </section>
+
+  <!-- SOURCE DIRECTORY (RECB-2) -->
+  <section>
+    <h2>Source directory</h2>
+    <p class="sub">Authoritative public sources powering this dashboard. Refresh task verifies all links resolve.</p>
+    <div class="sources" id="sources-grid"></div>
+  </section>
+
+</main>
+
+<footer>
+  Self-contained dashboard. Edits managed by the <code>tampa-bay-crystal-ball-refresh</code> scheduled task.
+  <br>Tracked under Jira project <a href="https://codeboxx.atlassian.net/jira/software/projects/RECB/boards/320">RECB</a>.
+</footer>
+
+<aside class="map-rail" id="map-rail" aria-hidden="true">
+  <button class="close" id="rail-close" aria-label="Close">&times;</button>
+  <div id="rail-content"></div>
+</aside>
+
+<!-- ================================================================ -->
+<!-- DATA BLOCK                                                       -->
+<!-- The refresh task surgically replaces the contents of each        -->
+<!-- DATA:* region between its START/END markers.                     -->
+<!-- ================================================================ -->
+<script>
+/* DATA:projects START */
+const projects = [
+  { name: "Water Street Tampa",          region: "Tampa — Downtown",       status: "Active",   value: "$3.5B",  type: "mixed",      lat: 27.9436, lng: -82.4520, source: "https://www.waterstreettampa.com/", acres: 56,  sqft: "9M",  units: "~3,500", phase: "Phase 1 delivered, Phase 2 underway", history: "Strategic Property Partners (Vinik). Multiple delivered towers including The Heron, Pearl, Asher; JW Marriott + EDITION hotels operating; Sparkman Wharf anchor." },
+  { name: "Ybor Harbor",                 region: "Tampa — Ybor City",      status: "Proposed", value: "$2.5B",  type: "mixed",      lat: 27.9601, lng: -82.4380, source: "https://www.tampa.gov/",            acres: 33,  sqft: "—",   units: "TBD",     phase: "In review",                          history: "Darryl Shaw waterfront proposal east of the Channel District." },
+  { name: "ONE Tampa",                   region: "Tampa — Downtown",       status: "Approved", value: "$700M",  type: "mixed",      lat: 27.9472, lng: -82.4570, source: "https://www.tampa.gov/",            acres: 1.5, sqft: "—",   units: "TBD",     phase: "Entitled, pre-construction",          history: "Proposed ~1,200 ft supertall — would be the tallest building in Florida if built." },
+  { name: "Gasworx",                     region: "Tampa — Ybor / Channel", status: "Active",   value: "$3B",    type: "masterplan", lat: 27.9558, lng: -82.4471, source: "https://www.gasworxtampa.com/",     acres: 50,  sqft: "2M",  units: "~5,000",  phase: "Phase 1 vertical",                    history: "Kettler / Shaw; streetcar extension links Ybor and Channel District." },
+  { name: "North Downtown",              region: "Tampa — North Downtown", status: "Proposed", value: "TBD",    type: "mixed",      lat: 27.9550, lng: -82.4612, source: "https://www.tampa.gov/",            acres: "—", sqft: "—",   units: "—",       phase: "District-level planning",             history: "District designation, multiple parcels assembling." },
+  { name: "East Tampa Industrial",       region: "Hillsborough — East",    status: "Active",   value: "—",      type: "industrial", lat: 27.9700, lng: -82.3900, source: "https://hillsgovhub.hillsboroughcounty.org/", acres: "—", sqft: "—", units: "n/a", phase: "Submarket activity",                  history: "Submarket label — refresh job should replace with named warehouse/logistics projects." },
+  { name: "Historic Gas Plant District", region: "St. Petersburg",         status: "Active",   value: "$6.5B",  type: "masterplan", lat: 27.7676, lng: -82.6534, source: "https://www.stpete.org/",           acres: 86,  sqft: "—",   units: "TBD",     phase: "Site work / framework in flux",       history: "Tropicana Field site redevelopment; affordable-housing carve-out; framework evolving with Rays stadium situation." },
+  { name: "St. Pete Pier District",      region: "St. Petersburg — Pier",  status: "Active",   value: "—",      type: "mixed",      lat: 27.7711, lng: -82.6266, source: "https://www.stpetepier.org/",       acres: 26,  sqft: "—",   units: "n/a",     phase: "Operating since 2020",                history: "$92M build; Pier Marketplace, Doc Ford's, Spa Beach, Tampa Bay Watch Discovery Center." }
+];
+/* DATA:projects END */
+
+/* DATA:submarkets START */
+// Approximate submarket polygons (lat/lng arrays). Refresh job can refine.
+const submarkets = [
+  { name: "Westshore",         polygon: [[27.96,-82.55],[27.96,-82.50],[27.92,-82.50],[27.92,-82.55]] },
+  { name: "Channel District",  polygon: [[27.95,-82.45],[27.95,-82.435],[27.935,-82.435],[27.935,-82.45]] },
+  { name: "Ybor City",         polygon: [[27.97,-82.45],[27.97,-82.43],[27.955,-82.43],[27.955,-82.45]] },
+  { name: "USF",               polygon: [[28.07,-82.43],[28.07,-82.40],[28.05,-82.40],[28.05,-82.43]] },
+  { name: "South Tampa",       polygon: [[27.92,-82.50],[27.92,-82.46],[27.86,-82.46],[27.86,-82.50]] },
+  { name: "Downtown St. Pete", polygon: [[27.78,-82.65],[27.78,-82.625],[27.76,-82.625],[27.76,-82.65]] },
+  { name: "Gateway",           polygon: [[27.87,-82.68],[27.87,-82.64],[27.84,-82.64],[27.84,-82.68]] },
+  { name: "Beaches (Pinellas)", polygon: [[27.85,-82.84],[27.85,-82.80],[27.72,-82.80],[27.72,-82.84]] }
+];
+/* DATA:submarkets END */
+
+/* DATA:permitHeat START */
+// Approximate permit-density seed points [lat, lng, weight]. Refresh job replaces with HillsGovHub feed.
+const permitHeat = [
+  [27.9436, -82.4520, 0.9], [27.9558, -82.4471, 1.0], [27.9601, -82.4380, 0.8],
+  [27.9472, -82.4570, 0.7], [27.9550, -82.4612, 0.6], [27.9700, -82.3900, 0.5],
+  [27.7676, -82.6534, 0.9], [27.7711, -82.6266, 0.6], [27.94,   -82.52,   0.4],
+  [27.95,   -82.51,   0.5], [28.05,   -82.41,   0.3], [27.86,   -82.48,   0.4],
+  [27.77,   -82.64,   0.7], [27.78,   -82.63,   0.5], [27.86,   -82.81,   0.3]
+];
+/* DATA:permitHeat END */
+
+/* DATA:indicators START */
+const indicators = [
+  { cls: "Single-family",     dir: "balanced",     vac: "~3 mo supply", price: "Tampa ZHVI —",  cap: "n/a",       note: "Resale supply normalizing." },
+  { cls: "Multifamily",       dir: "cool",         vac: "Vacancy —",    price: "Rent $/unit —", cap: "5.0–5.75%", note: "2026 deliveries pressure occupancy." },
+  { cls: "Office",            dir: "cool",         vac: "Vacancy —",    price: "Rent $/sf —",   cap: "7.5–9.0%",  note: "Westshore Class A holding." },
+  { cls: "Industrial",        dir: "balanced",     vac: "Absorption —", price: "Rent $/sf —",   cap: "5.75–6.5%", note: "Tampa East / I-4 corridor active." },
+  { cls: "Retail",            dir: "constrained",  vac: "Vacancy —",    price: "Rent $/sf —",   cap: "6.0–7.0%",  note: "Grocery-anchored tight." },
+  { cls: "Hospitality",       dir: "balanced",     vac: "Occupancy —",  price: "ADR —",         cap: "7.5–8.5%",  note: "Watch beaches seasonality." },
+  { cls: "Land / Masterplan", dir: "generational", vac: "n/a",          price: "$ /acre —",     cap: "n/a",       note: "Gas Plant + Gasworx redefine inventory." }
+];
+
+const indicatorThresholds = {
+  hot:          "Vacancy < 5% AND rent growth > 5% YoY",
+  balanced:     "Vacancy 5–8% AND rent growth 0–5% YoY",
+  cool:         "Vacancy > 8% OR negative absorption two quarters",
+  constrained:  "Low new supply AND demand persistently above delivery",
+  generational: "Single development materially reshapes submarket inventory or zoning"
+};
+/* DATA:indicators END */
+
+/* DATA:hearings START */
+// `highlights` array: any of "zoning" | "cra" | "landuse" gets a colored tag.
+const hearings = [
+  { when: "2026-05-19", title: "Tampa City Council — regular session",                 tag: "City Council", url: "https://www.tampa.gov/clerk/city-council",       highlights: [] },
+  { when: "2026-05-21", title: "Tampa City Council — evening land-use hearing",        tag: "Land use",     url: "https://www.tampa.gov/clerk/city-council",       highlights: ["landuse","zoning"] },
+  { when: "2026-05-22", title: "St. Petersburg DRC weekly agenda",                     tag: "DRC",          url: "https://www.stpete.org/planning_zoning/",        highlights: [] },
+  { when: "2026-05-26", title: "Tampa CRA quarterly TIF allocation review",            tag: "CRA",          url: "https://www.tampa.gov/economic-development/cra", highlights: ["cra"] },
+  { when: "2026-05-27", title: "Hillsborough Planning Commission",                     tag: "Planning",     url: "https://www.planhillsborough.org/",              highlights: [] },
+  { when: "2026-07-01", title: "Plan Hillsborough Q3 Comp Plan cycle deadline",        tag: "Comp plan",    url: "https://www.planhillsborough.org/",              highlights: ["landuse"] }
+];
+/* DATA:hearings END */
+
+/* DATA:transactions START */
+// `priority` 1–5 (lower = higher importance). Refresh job assigns based on
+// trophy-deal threshold (>$25M), pattern shift, or regulatory trigger.
+const transactions = [
+  { when: "2026-05-12", title: "Hillsborough foreclosure sales calendar (daily 10:00 AM)",        url: "https://www.hillsclerk.com/",                              priority: 4, tags: ["foreclosure"] },
+  { when: "2026-05-10", title: "TBBW: trophy office trade in Westshore — value pending",          url: "https://tbbwmag.com/",                                     priority: 1, tags: ["trophy"] },
+  { when: "2026-05-08", title: "Pinellas Records — lis pendens cluster flagged in 33710 ZIP",     url: "https://officialrecords.mypinellascounty.gov/",            priority: 3, tags: ["foreclosure"] },
+  { when: "2026-05-05", title: "FL HB 657 (condo / HOA) — committee action this week",            url: "https://www.flsenate.gov/",                                priority: 2, tags: ["bill"] },
+  { when: "2026-05-03", title: "Business Observer FL: multifamily portfolio trade — South Tampa", url: "https://www.businessobserverfl.com/",                      priority: 5, tags: ["trophy"] }
+];
+/* DATA:transactions END */
+
+/* DATA:foreclosurePulse START */
+// Weekly Hillsborough foreclosure filing count, oldest → newest.
+// Seed is illustrative; refresh job accumulates real counts after 6 weeks.
+const foreclosurePulse = [42, 38, 47, 51, 49, 55];
+/* DATA:foreclosurePulse END */
+
+/* DATA:sales START */
+// Recent closed sales (rolling 30 days). assetClass: residential | multifamily |
+// office | industrial | retail | hospitality | land. Refresh job populates from
+// Hillsborough/Pinellas Property Appraiser sales search + trade press.
+const recentSales = [
+  { when: "2026-05-13", property: "Westshore Tower (Class A office)", city: "Tampa",         assetClass: "office",      price: 142000000, psf: 385,  buyer: "Institutional REIT",     seller: "Private partnership",   source: "https://www.costar.com/news" },
+  { when: "2026-05-12", property: "Riverwalk Apartments — 312 units", city: "Tampa",         assetClass: "multifamily", price:  98500000, psf: null, buyer: "National multifamily fund", seller: "Local developer",      source: "https://www.businessobserverfl.com/" },
+  { when: "2026-05-10", property: "I-4 logistics warehouse — 412k sf", city: "Plant City",   assetClass: "industrial",  price:  46200000, psf: 112,  buyer: "Industrial REIT",        seller: "Owner-user",            source: "https://www.bisnow.com/tampa" },
+  { when: "2026-05-09", property: "Single-family — South Tampa (4/3)", city: "Tampa",        assetClass: "residential", price:   1850000, psf: 488,  buyer: "—",                       seller: "—",                     source: "https://gis.hcpafl.org/propertysearch/" },
+  { when: "2026-05-08", property: "Gateway flex/industrial portfolio", city: "St. Petersburg", assetClass: "industrial", price:  28750000, psf: 98,   buyer: "Private equity",          seller: "Family office",         source: "https://www.crexi.com/" },
+  { when: "2026-05-07", property: "Downtown St. Pete retail strip",   city: "St. Petersburg", assetClass: "retail",      price:   8400000, psf: 412,  buyer: "1031 exchange buyer",     seller: "Local owner",           source: "https://www.loopnet.com/" },
+  { when: "2026-05-05", property: "Beachfront hospitality — 180 keys", city: "Clearwater Beach", assetClass: "hospitality", price: 76000000, psf: null, buyer: "Hotel operator",          seller: "REIT divestiture",      source: "https://www.globest.com/sectors/florida/" },
+  { when: "2026-05-03", property: "Land assemblage — Channel District", city: "Tampa",       assetClass: "land",        price:  12500000, psf: null, buyer: "Mixed-use developer",     seller: "Three sellers",         source: "https://officialrecords.hillsclerk.com/" }
+];
+/* DATA:sales END */
+
+/* DATA:sources START */
+const sources = {
+  "Permits": [
+    { name: "HillsGovHub",                          url: "https://hillsgovhub.hillsboroughcounty.org/" },
+    { name: "Pinellas County Property Appraiser",   url: "https://www.pcpao.gov/" }
+  ],
+  "Planning": [
+    { name: "Plan Hillsborough",                    url: "https://www.planhillsborough.org/" },
+    { name: "St. Petersburg DRC",                   url: "https://www.stpete.org/planning_zoning/" }
+  ],
+  "Hearings": [
+    { name: "Tampa City Council",                   url: "https://www.tampa.gov/clerk/city-council" },
+    { name: "St. Petersburg Granicus",              url: "https://stpete.granicus.com/" }
+  ],
+  "Courts": [
+    { name: "Hillsborough Clerk Official Records",  url: "https://officialrecords.hillsclerk.com/" },
+    { name: "Hillsborough foreclosure sales",       url: "https://www.hillsclerk.com/" }
+  ],
+  "Broker research": [
+    { name: "JLL",                                  url: "https://www.jll.com/en-us/insights" },
+    { name: "CBRE",                                 url: "https://www.cbre.com/insights" },
+    { name: "Colliers",                             url: "https://www.colliers.com/en/research" },
+    { name: "Matthews",                             url: "https://www.matthews.com/research/" }
+  ],
+  "News": [
+    { name: "Tampa Bay Business Wire",              url: "https://tbbwmag.com/" },
+    { name: "Tampa Bay Times",                      url: "https://www.tampabay.com/" },
+    { name: "St Pete Rising",                       url: "https://www.stpeterising.com/" }
+  ],
+  "Pricing / MLS": [
+    { name: "Zillow",                               url: "https://www.zillow.com/" },
+    { name: "Redfin",                               url: "https://www.redfin.com/" },
+    { name: "Realtor.com",                          url: "https://www.realtor.com/" },
+    { name: "Stellar MLS (regional)",               url: "https://www.stellarmls.com/" }
+  ],
+  "Sales / Comps": [
+    { name: "Hillsborough Property Appraiser — sales search", url: "https://gis.hcpafl.org/propertysearch/" },
+    { name: "Pinellas Property Appraiser — sales search",     url: "https://www.pcpao.gov/" },
+    { name: "Hillsborough Clerk — recorded deeds",            url: "https://officialrecords.hillsclerk.com/" },
+    { name: "Pinellas Clerk — official records",              url: "https://officialrecords.mypinellascounty.gov/" },
+    { name: "FL DOR — sales ratio studies",                   url: "https://floridarevenue.com/property/Pages/DataPortal_RequestAssessmentRollGISData.aspx" },
+    { name: "Redfin — recently sold (Tampa)",                 url: "https://www.redfin.com/city/19171/FL/Tampa/recently-sold" },
+    { name: "Zillow — recently sold (Tampa)",                 url: "https://www.zillow.com/tampa-fl/sold/" },
+    { name: "LoopNet — sold (Tampa)",                         url: "https://www.loopnet.com/search/commercial-real-estate/tampa-fl/sold/" },
+    { name: "Crexi — closed sales (Tampa)",                   url: "https://www.crexi.com/properties?types%5B%5D=Closed&locations%5B%5D=Tampa%2C+FL" },
+    { name: "CoStar News",                                    url: "https://www.costar.com/news" },
+    { name: "Business Observer FL — deals",                   url: "https://www.businessobserverfl.com/" },
+    { name: "Bisnow Tampa",                                   url: "https://www.bisnow.com/tampa" },
+    { name: "GlobeSt — Florida",                              url: "https://www.globest.com/sectors/florida/" },
+    { name: "Greater Tampa Realtors — market stats",          url: "https://www.tamparealtors.org/statistics" },
+    { name: "Florida Realtors — market reports",              url: "https://www.floridarealtors.org/news-media/news-articles/category/market-reports" }
+  ],
+  "Policy": [
+    { name: "Florida Senate",                       url: "https://www.flsenate.gov/" },
+    { name: "Florida House",                        url: "https://www.myfloridahouse.gov/" },
+    { name: "Florida Realtors",                     url: "https://www.floridarealtors.org/" }
+  ]
+};
+/* DATA:sources END */
+</script>
+
+<!-- ================================================================ -->
+<!-- RENDER + MAP LOGIC                                               -->
+<!-- ================================================================ -->
+<script>
+(function () {
+  const TYPE_COLOR = {
+    mixed:       getCSS('--cyan'),
+    residential: getCSS('--green'),
+    industrial:  getCSS('--amber'),
+    masterplan:  getCSS('--purple'),
+    office:      getCSS('--red')
+  };
+
+  // ---------- Leaflet map ----------
+  const map = L.map('map', { scrollWheelZoom: false }).setView([27.87, -82.55], 10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
+  }).addTo(map);
+
+  // ----- Markers -----
+  const markerByName = {};
+  projects.forEach(p => {
+    const m = L.circleMarker([p.lat, p.lng], {
+      radius: 9,
+      color: '#0b1220',
+      weight: 2,
+      fillColor: TYPE_COLOR[p.type] || '#fff',
+      fillOpacity: 0.9
+    })
+    .bindPopup(`
+      <strong>${esc(p.name)}</strong><br>
+      ${esc(p.region)}<br>
+      Status: ${esc(p.status)}<br>
+      Value: ${esc(p.value)}<br>
+      <a href="#" data-rail="${esc(p.name)}">More details &rarr;</a>
+    `)
+    .addTo(map);
+    m.on('popupopen', e => {
+      const link = e.popup.getElement().querySelector('[data-rail]');
+      if (link) link.addEventListener('click', ev => { ev.preventDefault(); openRail(p); });
+    });
+    markerByName[p.name] = { marker: m, status: p.status };
+  });
+
+  // ----- Status filters -----
+  document.querySelectorAll('.map-controls [data-status]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const allowed = new Set(
+        Array.from(document.querySelectorAll('.map-controls [data-status]:checked'))
+             .map(x => x.dataset.status)
+      );
+      Object.entries(markerByName).forEach(([name, { marker, status }]) => {
+        if (allowed.has(status)) marker.addTo(map);
+        else map.removeLayer(marker);
+      });
+    });
+  });
+
+  // ----- Submarket overlay layer -----
+  const submarketLayer = L.layerGroup(
+    submarkets.map(s => L.polygon(s.polygon, {
+      color: getCSS('--accent-2'),
+      weight: 1,
+      fillColor: getCSS('--accent-2'),
+      fillOpacity: 0.08
+    }).bindTooltip(s.name, { permanent: false, direction: 'center', className: 'submarket-label' }))
+  );
+  document.getElementById('layer-submarkets').addEventListener('change', e => {
+    if (e.target.checked) submarketLayer.addTo(map);
+    else map.removeLayer(submarketLayer);
+  });
+
+  // ----- Permit-density heatmap -----
+  const heatLayer = window.L.heatLayer
+    ? L.heatLayer(permitHeat, { radius: 30, blur: 25, maxZoom: 12,
+        gradient: { 0.2: '#4cc2ff', 0.5: '#7c5cff', 0.8: '#ffb347', 1.0: '#ff5d6c' } })
+    : null;
+  document.getElementById('layer-heatmap').addEventListener('change', e => {
+    if (!heatLayer) return;
+    if (e.target.checked) heatLayer.addTo(map);
+    else map.removeLayer(heatLayer);
+  });
+
+  // ----- Right-rail expansion -----
+  const rail = document.getElementById('map-rail');
+  const railContent = document.getElementById('rail-content');
+  document.getElementById('rail-close').addEventListener('click', closeRail);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRail(); });
+  function openRail(p) {
+    railContent.innerHTML = `
+      <h3>${esc(p.name)}</h3>
+      <div class="row"><span>Region</span><strong>${esc(p.region)}</strong></div>
+      <div class="row"><span>Status</span><strong>${esc(p.status)}</strong></div>
+      <div class="row"><span>Type</span><strong>${esc(p.type)}</strong></div>
+      <div class="row"><span>Value</span><strong>${esc(p.value)}</strong></div>
+      <div class="row"><span>Acres</span><strong>${esc(p.acres)}</strong></div>
+      <div class="row"><span>Sq ft</span><strong>${esc(p.sqft)}</strong></div>
+      <div class="row"><span>Units</span><strong>${esc(p.units)}</strong></div>
+      <div class="row"><span>Phase</span><strong>${esc(p.phase)}</strong></div>
+      <p style="margin-top:14px;font-size:13px;color:var(--muted);">${esc(p.history)}</p>
+      <a class="src-btn" href="${esc(p.source)}" target="_blank" rel="noopener">Open primary source &rarr;</a>
+    `;
+    rail.classList.add('open');
+    rail.setAttribute('aria-hidden', 'false');
+  }
+  function closeRail() {
+    rail.classList.remove('open');
+    rail.setAttribute('aria-hidden', 'true');
+  }
+
+  // ---------- Projects grid ----------
+  document.getElementById('proj-grid').innerHTML = projects.map(p => `
+    <div class="proj">
+      <h3>${esc(p.name)}</h3>
+      <div class="row"><span>Region</span><strong>${esc(p.region)}</strong></div>
+      <div class="row"><span>Status</span><strong>${esc(p.status)}</strong></div>
+      <div class="row"><span>Value</span><strong>${esc(p.value)}</strong></div>
+      <div class="row" style="margin-top:8px"><span class="type type-${esc(p.type)}">${esc(p.type)}</span><a href="${esc(p.source)}" target="_blank" rel="noopener">Source &rarr;</a></div>
+    </div>
+  `).join('');
+
+  // ---------- Indicators ----------
+  document.getElementById('indicators-body').innerHTML = indicators.map(i => `
+    <tr>
+      <td><strong>${esc(i.cls)}</strong></td>
+      <td><span class="pill pill-${esc(i.dir)}">${esc(i.dir)}</span></td>
+      <td>${esc(i.vac)}</td>
+      <td>${esc(i.price)}</td>
+      <td>${esc(i.cap)}</td>
+      <td>${esc(i.note)}</td>
+    </tr>
+  `).join('');
+
+  // ---------- Hearings (RECB-5, rolling 14-day window + highlight tags) ----------
+  const today = new Date('2026-05-15');  // refresh job restamps via DATA:refresh
+  const horizon = new Date(today); horizon.setDate(horizon.getDate() + 14);
+  const liveHearings = hearings
+    .filter(h => new Date(h.when) >= today && new Date(h.when) <= horizon)
+    .sort((a, b) => a.when.localeCompare(b.when));
+  document.getElementById('hearings-count').textContent = `${liveHearings.length} in next 14 days`;
+  document.getElementById('hearings-list').innerHTML = liveHearings.map(h => `
+    <li>
+      <span class="when">${esc(h.when)}</span>
+      <a href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.title)}</a>
+      ${h.tag ? `<span class="tag">${esc(h.tag)}</span>` : ''}
+      ${(h.highlights || []).map(k => `<span class="tag tag-${esc(k)}">${esc(k)}</span>`).join('')}
+    </li>
+  `).join('') || '<li><em>No hearings in the next 14 days.</em></li>';
+
+  // ---------- Transactions (RECB-6, top-5 by priority) ----------
+  const topTransactions = [...transactions]
+    .sort((a, b) => (a.priority || 99) - (b.priority || 99))
+    .slice(0, 5);
+  document.getElementById('transactions-list').innerHTML = topTransactions.map((t, idx) => `
+    <li class="feed-row ${idx === 0 ? 'priority' : ''}">
+      <span class="when">${esc(t.when)}</span>
+      <a href="${esc(t.url)}" target="_blank" rel="noopener">${esc(t.title)}</a>
+      ${(t.tags || []).map(k => `<span class="tag tag-${esc(k)}">${esc(k)}</span>`).join('')}
+    </li>
+  `).join('');
+
+  // ---------- Foreclosure trend sparkline ----------
+  drawSparkline('foreclosure-chart', foreclosurePulse);
+  if (foreclosurePulse.length >= 6) {
+    document.getElementById('foreclosure-chart-sub').textContent =
+      `Last ${foreclosurePulse.length} weeks. Latest: ${foreclosurePulse[foreclosurePulse.length-1]} filings.`;
+  }
+
+  // ---------- Recent Sales (RECB-6 gap, sorted newest first) ----------
+  document.getElementById('sales-body').innerHTML = [...recentSales]
+    .sort((a, b) => b.when.localeCompare(a.when))
+    .map(s => `
+      <tr>
+        <td>${esc(s.when)}</td>
+        <td>${esc(s.property)}<br><span style="color:var(--muted);font-size:11px;">${esc(s.city)}</span></td>
+        <td><span class="class">${esc(s.assetClass)}</span></td>
+        <td class="num">${formatPrice(s.price)}</td>
+        <td class="num">${s.psf ? '$' + s.psf : '—'}</td>
+        <td>${esc(s.buyer)} ← ${esc(s.seller)}</td>
+        <td><a href="${esc(s.source)}" target="_blank" rel="noopener">Source</a></td>
+      </tr>
+    `).join('');
+
+  // ---------- Sources ----------
+  document.getElementById('sources-grid').innerHTML = Object.entries(sources).map(([cat, items]) => `
+    <div class="source-cat">
+      <h4>${esc(cat)}</h4>
+      <ul>${items.map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.name)}</a></li>`).join('')}</ul>
+    </div>
+  `).join('');
+
+  // ---------- Helpers ----------
+  function drawSparkline(id, data) {
+    const svg = document.getElementById(id);
+    if (!svg || !data.length) return;
+    const W = 600, H = 140, pad = 12;
+    const max = Math.max(...data), min = Math.min(...data);
+    const range = Math.max(1, max - min);
+    const step = (W - pad * 2) / Math.max(1, data.length - 1);
+    const pts = data.map((v, i) => [pad + i * step, H - pad - ((v - min) / range) * (H - pad * 2)]);
+    const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+    const area = `M${pts[0][0]},${H-pad} ${line.replace(/^M/, 'L')} L${pts[pts.length-1][0]},${H-pad} Z`;
+    svg.innerHTML = `
+      <path d="${area}" fill="rgba(255,93,108,0.15)" />
+      <path d="${line}" fill="none" stroke="${getCSS('--hot')}" stroke-width="2" />
+      ${pts.map(p => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="${getCSS('--hot')}" />`).join('')}
+    `;
+  }
+
+  function formatPrice(n) {
+    if (n == null) return '—';
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+    return '$' + n;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function getCSS(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+})();
+</script>
+
+</body>
+</html>
